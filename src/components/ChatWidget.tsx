@@ -87,7 +87,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
     try {
       console.log("Sending to OpenAI backend:", requestData);
 
-      const response = await fetch('http://localhost:5000/api/process', {
+      const response = await fetch('https://gpt-be.onrender.com/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
