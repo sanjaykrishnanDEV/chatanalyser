@@ -31,7 +31,7 @@ export function ConversationTable({ conversations, loading, setChatData, search,
   const [currentPage, setCurrentPage] = useState(1);
   const [, setIsChatOpen] = useState(false);
   const [, setChatMessages] = useState<{ author: string; message: string }[]>([]);
-  const [question, setQuestion] = useState('');
+  const [question, ] = useState('');
   const [loadingState, setLoadingState] = useState(false);
 
   const debounceSearch = useCallback((value: string) => {
