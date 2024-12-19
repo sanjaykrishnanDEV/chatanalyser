@@ -145,15 +145,40 @@ export function ConversationTable({ conversations, loading, setChatData, search,
     }
 
     const defaultQuestion = `
-    Given the following conversation data:
-    - Subjects, authors, and creation dates are provided for each context.
-    - Each context includes detailed conversation parts with their respective authors.
+Given the following conversation data:
+- Each entry in the data array includes:
+  - **subject**: A string representing the topic of the conversation.
+  - **createdAt**: The date and time of creation in ISO format.
+  - **author**: The person who initiated the conversation.
+  - **conversationParts**: An array of strings, each representing a segment of the conversation authored by participants.
 
-    Please provide:
-    1. A summary of key points discussed across all subjects.
-    2. An analysis of the most frequent themes or topics covered.
-    3. Suggestions for improving the communication based on the conversation details.
-    `;
+Please analyze this data and provide the following:
+
+1. **Key Point Summary**:
+   - Summarize the main ideas and conclusions discussed in each subject.
+   - Note any unresolved issues or next steps.
+
+2. **Theme Analysis**:
+   - Identify recurring topics or themes across all conversations.
+   - Categorize them into major groups (e.g., technical, operational, interpersonal).
+
+3. **Communication Suggestions**:
+   - Assess the clarity and effectiveness of the communication.
+   - Suggest improvements to address any identified issues (e.g., miscommunication, lack of detail).
+
+4. **Sentiment Analysis**:
+   - Determine the tone (positive, negative, neutral) for each conversation or segment.
+   - Provide examples to support your sentiment assessment.
+
+5. **Impact of Tone on Effectiveness**:
+   - Discuss how the tone of conversations influences their outcomes.
+   - Offer strategies to maintain a constructive and professional tone in future discussions.
+
+**Output Format**:
+- Use structured sections with clear headings for each analysis point.
+- Include bullet points or concise explanations for ease of understanding.
+`;
+
 
     const requestData = {
       data: [trimmedContext],
