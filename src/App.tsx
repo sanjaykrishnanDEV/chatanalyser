@@ -14,7 +14,8 @@ function App() {
   const [chatData, setChatData] = useState<string[]>([]); 
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
-  
+  const [chatHistory, setChatHistory] = useState<string[]>([]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const searchParam = params.get('search');
@@ -72,6 +73,8 @@ function App() {
               setSearch={setSearch}
               dateRange={dateRange}
               setDateRange={setDateRange}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
             />
           </div>
           <div className="lg:col-span-2">
@@ -79,7 +82,10 @@ function App() {
              conversations={conversations} 
              selectedData={selectedData}
               chatData={chatData}
-              setChatData={setChatData}/>
+              setChatData={setChatData}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              />
           </div>
         </div>
       </div>

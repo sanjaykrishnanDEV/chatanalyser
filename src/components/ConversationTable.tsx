@@ -10,7 +10,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-// import { toast } from '@/components/ui/toast'; // Toaster component
 import { formatSubject, formatDate } from '@/lib/utils/conversation';
 import type { Conversation } from '@/types';
 
@@ -23,16 +22,28 @@ interface ConversationTableProps {
   setSearch: (value: string) => void;
   dateRange: { from: string; to: string };
   setDateRange: (value: { from: string; to: string }) => void;
+  chatHistory: string[]; 
+  setChatHistory: (history: string[]) => void;
 }
 
-export function ConversationTable({ conversations, loading, setChatData, search, setSearch, dateRange, setDateRange }: ConversationTableProps) {
+export function ConversationTable({
+  conversations,
+  loading,
+  setChatData,
+  search,
+  setSearch,
+  dateRange,
+  setDateRange,
+  setChatHistory,
+}: ConversationTableProps) {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
-  const [displayCount, ] = useState(10);
+  const [displayCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [, setIsChatOpen] = useState(false);
   const [, setChatMessages] = useState<{ author: string; message: string }[]>([]);
-  const [question, setQuestion] = useState('');
+  const [question, ] = useState('');
   const [loadingState, setLoadingState] = useState(false);
+  const [context, setContext] = useState<any[]>([]); // Add this line
 
   const debounceSearch = useCallback((value: string) => {
     const handler = setTimeout(() => {
@@ -49,8 +60,7 @@ export function ConversationTable({ conversations, loading, setChatData, search,
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => {
-    // @ts-ignore
-    setDateRange((prev: any) => ({ ...prev, [type]: e.target.value }));
+    setDateRange((prev) => ({ ...prev, [type]: e.target.value }));
   };
 
   const handleResetFilters = () => {
@@ -103,48 +113,54 @@ export function ConversationTable({ conversations, loading, setChatData, search,
 
   const handleAddToChat = () => {
     setLoadingState(true);
-    const context = paginatedConversations.map((conv) => ({
-      subject: conv.source?.subject,
-      createdAt: conv.created_at,
-      author: conv.source?.author?.name ?? 'Unknown',
-      conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
-        body: part.body,
-        authorName: part.author?.name ?? 'Unknown',
-      })),
-    }));
+    setChatData([]); // Clear chat data
+    setChatMessages([]); // Clear chat history
+    setChatHistory([])
+    const context = []; // Initialize an empty context array
+    let tokenCount = 0; // Initialize token count
+
+    // Iterate through all conversations to build context
+    for (const conv of conversations) {
+      const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
+      const conversationTokens = estimateTokenCount(conversationText);
+
+      // Check if adding this conversation exceeds the token limit
+      if (tokenCount + conversationTokens > 6000 * 0.8) break; // 80% of token limit
+      context.push({
+        subject: conv.source?.subject,
+        createdAt: conv.created_at,
+        author: conv.source?.author?.name ?? 'Unknown',
+        conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
+          body: part.body,
+          authorName: part.author?.name ?? 'Unknown',
+        })),
+      });
+      tokenCount += conversationTokens; // Update token count
+    }
 
     // Combine all text for token estimation
     const allText = context
       .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
       .join(' ');
-    
+
     const totalTokens = estimateTokenCount(allText);
-    const maxTokens = 12000;
+    console.log("token", totalTokens);
+    // console.log("totalchats",context)
+    setContext(context);
+    const requestData = {
+      data: context,
+      headers: ['subject', 'createdAt', 'author', 'conversationParts'],
+      question: question || defaultQuestion,
+      promptType: "extractInfo",
+    };
 
-    let trimmedContext = context;
+    setChatMessages((prev) => [...prev, { author: 'User', message: 'Adding to chat...' }]);
+    handleSubmitToOpenAI(requestData);
+    setIsChatOpen(true);
+    setLoadingState(false);
+  };
 
-    if (totalTokens > maxTokens) {
-      let tokenCount = 0;
-
-      // Slice the context to fit within the token limit
-      trimmedContext = [];
-      for (const conv of context) {
-        const conversationText = `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`;
-        const conversationTokens = estimateTokenCount(conversationText);
-
-        if (tokenCount + conversationTokens > maxTokens) break;
-        trimmedContext.push(conv);
-        tokenCount += conversationTokens;
-      }
-
-      // toast({
-      //   title: 'Token Limit Exceeded',
-      //   description: `The data exceeds 12,000 tokens. Sending only the top conversations within the limit.`,
-      //   status: 'warning',
-      // });
-    }
-
-    const defaultQuestion = `
+  const defaultQuestion = `
 You're an expert CSM analysing intercom pasts chats
 
 Conversation data is provided in the following format:
@@ -182,26 +198,11 @@ Please analyze this data and provide the following:
 
 conversation data follows
 ---
-
 `;
-
-
-    const requestData = {
-      data: [trimmedContext],
-      headers: ['subject', 'createdAt', 'author', 'conversationParts'],
-      question: question || defaultQuestion,
-      promptType: "extractInfo",
-    };
-
-    setChatMessages((prev) => [...prev, { author: 'User', message: 'Adding to chat...' }]);
-    handleSubmitToOpenAI(requestData);
-    setIsChatOpen(true);
-    setLoadingState(false);
-  };
 
   const handleSubmitToOpenAI = async (requestData: any, retries: number = 3) => {
     try {
-      const response = await fetch('https://gpt-be.onrender.com/api/process', {
+      const response = await fetch('http://localhost:5000/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -265,33 +266,12 @@ conversation data follows
             />
           </div>
         </div>
-        {/* <div className="flex flex-col w-1/3 pl-2">
-         
-        </div> */}
       </div>
-      <div className="flex items-center w-full space-x-4 mt-4 justify-between">
-        {/* Date Range Inputs */}
-        {/* <div className="flex items-center">
-          <div className="mr-4">
-            <label>From:</label>
-            <Input
-              type="date"
-              value={dateRange.from}
-              onChange={(e) => handleDateChange(e, 'from')}
-            />
-          </div>
-          <div>
-            <label>To:</label>
-            <Input
-              type="date"
-              value={dateRange.to}
-              onChange={(e) => handleDateChange(e, 'to')}
-            />
-          </div> */}
-        {/* </div> */}
-        {/* Buttons */}
-        Selected {paginatedConversations.length} of {10*23} chats ({conversations.length} total chats) 
 
+      {/* Selected count and buttons */}
+      <div className="flex items-center w-full space-x-4 mt-4 justify-between">
+        {/* Selected {context.length} of {filteredConversations.length} chats ({conversations.length} total chats) */}
+        <p>Selected top {context.length} out of total {filteredConversations.length} chats to fit context length</p>
         <div className="flex items-center ml-auto">
           <button disabled={loadingState} onClick={handleResetFilters} className="btn bg-secondary text-black mt-4 ">
             Reset Filters
@@ -332,23 +312,21 @@ conversation data follows
         </Table>
       </ScrollArea>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
+      {/* Pagination */}
+      <div className="flex justify-between mt-4">
+        <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} className="btn bg-primary text-white">
           Previous
         </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
+        <div className="flex items-center space-x-4">
+          <span>Page {currentPage} of {totalPages}</span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+            className="btn bg-primary text-white"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

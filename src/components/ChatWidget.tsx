@@ -11,12 +11,13 @@ interface ChatWidgetProps {
   chatData: string[];
   conversations: any;
   setChatData: (data: string[]) => void;
+  chatHistory: string[];
+  setChatHistory: (history: string[]) => void;
 }
 
-export function ChatWidget({ selectedData, chatData, conversations, setChatData }: ChatWidgetProps) {
+export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, conversations, setChatData }: ChatWidgetProps) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +105,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
       
       setChatHistory(prev => [...prev, `User: ${prompt}`, `AI: ${aiResponse}`]);
       // @ts-ignore
-      setChatData((prev: any) => [...prev, aiResponse]);
+      // setChatData((prev: any) => [...prev, aiResponse]);
       setPrompt('');
     } catch (error) {
       console.error("Error during API submission:", error);
