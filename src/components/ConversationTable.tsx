@@ -60,6 +60,7 @@ export function ConversationTable({
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => {
+   //@ts-ignore
     setDateRange((prev) => ({ ...prev, [type]: e.target.value }));
   };
 
