@@ -170,7 +170,7 @@ export function ConversationTable({ conversations, loading, setChatData, search,
 
   const handleSubmitToOpenAI = async (requestData: any, retries: number = 3) => {
     try {
-      const response = await fetch('http://localhost:5000/api/process', {
+      const response = await fetch('https://gpt-be.onrender.com/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
