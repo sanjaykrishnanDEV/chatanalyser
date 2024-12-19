@@ -35,22 +35,33 @@ function App() {
   }, [search, dateRange]);
 
   return (
-    <div className="min-h-screen bg-background p-8 w-screen">
+    <div className="max-h-screen bg-background p-8 w-screen overflow-hidden">
       <div className="mx-auto max-w-10xl space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold">Conversation Analyzer</h1>
           <FileUploader 
-            onUpload={setConversations} 
+            onUpload={(data) => {
+              setConversations(data);
+              setLoading(false);
+              // Apply filters based on URL parameters
+              setSearch(search); // Ensure search is set from URL
+              setDateRange((prev) => ({
+                ...prev,
+                from: dateRange.from || '', // Ensure from date is set from URL
+                to: dateRange.to || '' // Ensure to date is set from URL
+              }));
+            }}  
             setLoading={setLoading}
           >
             <Button>
               <Upload className="mr-2 h-4 w-4" />
               Upload JSONL
             </Button>
+            
           </FileUploader>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <ConversationTable 
               conversations={conversations} 
@@ -63,7 +74,7 @@ function App() {
               setDateRange={setDateRange}
             />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <ChatWidget
              conversations={conversations} 
              selectedData={selectedData}

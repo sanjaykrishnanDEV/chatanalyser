@@ -117,7 +117,7 @@ export function ConversationTable({ conversations, loading, setChatData, search,
     const allText = context
       .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
       .join(' ');
-
+    
     const totalTokens = estimateTokenCount(allText);
     const maxTokens = 12000;
 
@@ -145,7 +145,9 @@ export function ConversationTable({ conversations, loading, setChatData, search,
     }
 
     const defaultQuestion = `
-Given the following conversation data:
+You're an expert CSM analysing intercom pasts chats
+
+Conversation data is provided in the following format:
 - Each entry in the data array includes:
   - **subject**: A string representing the topic of the conversation.
   - **createdAt**: The date and time of creation in ISO format.
@@ -177,6 +179,10 @@ Please analyze this data and provide the following:
 **Output Format**:
 - Use structured sections with clear headings for each analysis point.
 - Include bullet points or concise explanations for ease of understanding.
+
+conversation data follows
+---
+
 `;
 
 
@@ -230,29 +236,42 @@ Please analyze this data and provide the following:
   }
 
   return (
-    <div className="space-y-4 mx-10">
+    <div className="space-y-4  overflow-hidden ">
       {/* Search and Date Range Inputs */}
-      <div className="flex">
-        <div className="flex flex-col w-1/3 pr-2">
-          <div className="mb-3 text-lg">Search Term</div>
+      <div className="flex ">
+        <div className="flex flex-col w-1/3 pr-2 mr-5">
+          <div className="text-lg">Search Term</div>
           <Input
             placeholder="Search conversations..."
             value={search}
             onChange={handleSearchChange}
           />
         </div>
-        <div className="flex flex-col w-1/3 pl-2">
-          <div className="text-lg mb-3">Additional Questions</div>
-          <Input
-            placeholder="Enter your question..."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-          />
+        <div className="flex items-center justify-between">
+          <div className="mr-4">
+            <label className='text-lg'>From:</label>
+            <Input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => handleDateChange(e, 'from')}
+            />
+          </div>
+          <div>
+            <label className='text-lg'>To:</label>
+            <Input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => handleDateChange(e, 'to')}
+            />
+          </div>
         </div>
+        {/* <div className="flex flex-col w-1/3 pl-2">
+         
+        </div> */}
       </div>
       <div className="flex items-center w-full space-x-4 mt-4 justify-between">
         {/* Date Range Inputs */}
-        <div className="flex items-center">
+        {/* <div className="flex items-center">
           <div className="mr-4">
             <label>From:</label>
             <Input
@@ -268,11 +287,13 @@ Please analyze this data and provide the following:
               value={dateRange.to}
               onChange={(e) => handleDateChange(e, 'to')}
             />
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
         {/* Buttons */}
+        Selected {paginatedConversations.length} of {10*23} chats ({conversations.length} total chats) 
+
         <div className="flex items-center ml-auto">
-          <button disabled={loadingState} onClick={handleResetFilters} className="btn bg-primary text-white mt-4">
+          <button disabled={loadingState} onClick={handleResetFilters} className="btn bg-secondary text-black mt-4 ">
             Reset Filters
           </button>
           <button disabled={loadingState} onClick={handleAddToChat} className="btn bg-primary text-white mt-4 ml-4">

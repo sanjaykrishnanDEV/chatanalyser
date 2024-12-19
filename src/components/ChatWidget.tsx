@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {  useState } from 'react';
 import { SendHorizontal, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,7 +76,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
     2. An analysis of the most frequent themes or topics covered.
     3. Suggestions for improving the communication based on the conversation details.
     `;
-
+    
     const requestData = {
       data: [chatData],
       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
@@ -116,7 +116,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
   };
 
   return (
-    <Card className="max-h-[900px] flex flex-col overflow-y-scroll">
+    <Card className="max-h-[800px] flex flex-col overflow-y-scroll">
       <CardHeader>
         <CardTitle>AI Chat</CardTitle>
       </CardHeader>
@@ -128,12 +128,69 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
     <p className="text-md">User: {message}</p>
   </div>
 ))} */}
- {chatData.length > 0 && (
-  <div className="p-3 rounded-lg bg-muted mr-4 ml-auto text-right">
-    {/* <p className="text-lg">User</p> */}
-    <p className="text-md">{chatData[0]}</p>
-  </div>
-)}
+<div className="p-3 rounded-lg text-lg text-black mr-4 text-left">
+<pre className='text-lg'>Initial prompt</pre>
+------------------------------------
+<pre className='text-sm p-6'>
+  {`You're an expert CSM analysing intercom pasts chats
+
+Conversation data is provided in the following format:
+- Each entry in the data array includes:
+  - **subject**: A string representing the topic of the conversation.
+  - **createdAt**: The date and time of creation in ISO format.
+  - **author**: The person who initiated the conversation.
+  - **conversationParts**: An array of strings, each representing a segment of the conversation authored by participants.
+
+Please analyze this data and provide the following:
+
+1. **Key Point Summary**:
+   - Summarize the main ideas and conclusions discussed in each subject.
+   - Note any unresolved issues or next steps.
+
+2. **Theme Analysis**:
+   - Identify recurring topics or themes across all conversations.
+   - Categorize them into major groups (e.g., technical, operational, interpersonal).
+
+3. **Communication Suggestions**:
+   - Assess the clarity and effectiveness of the communication.
+   - Suggest improvements to address any identified issues (e.g., miscommunication, lack of detail).
+
+4. **Sentiment Analysis**:
+   - Determine the tone (positive, negative, neutral) for each conversation or segment.
+   - Provide examples to support your sentiment assessment.
+
+5. **Impact of Tone on Effectiveness**:
+   - Discuss how the tone of conversations influences their outcomes.
+   - Offer strategies to maintain a constructive and professional tone in future discussions.
+
+**Output Format**:
+- Use structured sections with clear headings for each analysis point.
+- Include bullet points or concise explanations for ease of understanding.
+
+conversation data follows
+---
+`}
+</pre>
+</div>
+{chatData.length > 0 && (
+      <div className="p-3 rounded-lg bg-muted text-left">
+        <h2 className="font-semibold text-xl mb-2">AI Response</h2>
+        {chatData.map((message, index) => (
+          <div key={index}>
+            {/* Parse sections like '1. Key Point Summary' dynamically */}
+            {message.split('\n').map((line, i) => (
+              <p key={i} className="mb-2">
+                {line.startsWith('**') ? (
+                  <span className="font-bold">{line.replace(/\*\*/g, '')}</span>
+                ) : (
+                  line
+                )}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
+    )}
 {chatHistory.map((message, index) => (
   <div key={index} className="p-3 rounded-lg text-lg bg-black text-white mr-4 text-left">
     <p className="text-md">{message}</p>
