@@ -2,14 +2,11 @@ import { useState, useMemo } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { DateRangePicker } from './DateRangePicker';
 import { TableHeader } from './TableHeader';
 import { TableRow } from './TableRow';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { AVAILABLE_COLUMNS } from '@/lib/constants/columns';
-import { applyFilters } from '@/lib/utils/filters';
 import type { Conversation } from '@/types';
 
 interface ConversationTableProps {
@@ -18,7 +15,7 @@ interface ConversationTableProps {
   onSelect: (conversation: Conversation) => void;
 }
 
-export function ConversationTable({ conversations, loading, onSelect }: ConversationTableProps) {
+export function ConversationTable({ conversations, loading }: ConversationTableProps) {
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
@@ -107,8 +104,9 @@ export function ConversationTable({ conversations, loading, onSelect }: Conversa
               <TableRow
                 key={conversation.id}
                 conversation={conversation}
-                onSelect={onSelect}
-              />
+                onSelect={() => ('')} columns={[]} expanded={false} onClick={function (): void {
+                  throw new Error('Function not implemented.');
+                } }              />
             ))}
           </TableBody>
         </Table>

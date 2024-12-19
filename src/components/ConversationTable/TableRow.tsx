@@ -3,13 +3,19 @@ import { Badge } from '@/components/ui/badge';
 import { MessageCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils/conversation';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { Conversation, ColumnDef } from '@/types';
-
+import type { Conversation } from '@/types';
+export interface ColumnDef {
+  id: string;
+  label: string;
+  path: string;
+  defaultVisible: boolean;
+}
 interface TableRowProps {
   conversation: Conversation;
   columns: ColumnDef[];
   expanded: boolean;
   onClick: () => void;
+  onSelect: ()=>void;
 }
 
 export function TableRow({ 

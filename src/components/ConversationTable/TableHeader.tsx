@@ -3,12 +3,15 @@ import {
   TableHeader as ShadcnTableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { ColumnDef } from '@/types';
-
+export interface ColumnDef {
+  id: string;
+  label: string;
+  path: string;
+  defaultVisible: boolean;
+}
 interface TableHeaderProps {
   columns: ColumnDef[];
 }
-
 export function TableHeader({ columns }: TableHeaderProps) {
   return (
     <ShadcnTableHeader>

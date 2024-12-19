@@ -1,4 +1,3 @@
-import type { Conversation } from '@/types';
 
 export function deepSearch(obj: any, searchTerm: string): boolean {
   if (!searchTerm) return true;

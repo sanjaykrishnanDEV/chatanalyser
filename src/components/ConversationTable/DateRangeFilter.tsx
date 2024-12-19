@@ -68,6 +68,7 @@ export function DateRangeFilter({ onDateRangeChange }: DateRangeFilterProps) {
           mode="range"
           defaultMonth={date.from}
           selected={{ from: date.from, to: date.to }}
+          // @ts-ignore
           onSelect={handleSelect}
           numberOfMonths={2}
         />

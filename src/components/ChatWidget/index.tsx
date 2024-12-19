@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { Bot, User } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Chat, ChatRow, ChatAvatar, ChatMessage } from '@/components/ui/chat';
 import { ChatInput } from './ChatInput';
 import { filterConversationParts } from '@/lib/utils/conversation';
 import type { Conversation } from '@/types';

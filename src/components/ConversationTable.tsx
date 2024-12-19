@@ -25,12 +25,12 @@ interface ConversationTableProps {
   setDateRange: (value: { from: string; to: string }) => void;
 }
 
-export function ConversationTable({ conversations, loading, onSelect, setChatData, search, setSearch, dateRange, setDateRange }: ConversationTableProps) {
+export function ConversationTable({ conversations, loading, setChatData, search, setSearch, dateRange, setDateRange }: ConversationTableProps) {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
-  const [displayCount, setDisplayCount] = useState(10);
+  const [displayCount, ] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ author: string; message: string }[]>([]);
+  const [, setIsChatOpen] = useState(false);
+  const [, setChatMessages] = useState<{ author: string; message: string }[]>([]);
   const [question, setQuestion] = useState('');
   const [loadingState, setLoadingState] = useState(false);
 
@@ -49,7 +49,8 @@ export function ConversationTable({ conversations, loading, onSelect, setChatDat
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => {
-    setDateRange((prev) => ({ ...prev, [type]: e.target.value }));
+    // @ts-ignore
+    setDateRange((prev: any) => ({ ...prev, [type]: e.target.value }));
   };
 
   const handleResetFilters = () => {

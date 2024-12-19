@@ -8,8 +8,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Settings2 } from 'lucide-react';
-import type { ColumnDef } from '@/types';
 
+export interface ColumnDef {
+  id: string;
+  label: string;
+  path: string;
+  defaultVisible: boolean;
+}
 interface ColumnSelectorProps {
   columns: ColumnDef[];
   visibleColumns: Set<string>;

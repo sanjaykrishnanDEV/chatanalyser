@@ -1,5 +1,9 @@
-import type { ColumnDef } from '@/types';
-
+export interface ColumnDef {
+  id: string;
+  label: string;
+  path: string;
+  defaultVisible: boolean;
+}
 export const AVAILABLE_COLUMNS: ColumnDef[] = [
   {
     id: 'subject',

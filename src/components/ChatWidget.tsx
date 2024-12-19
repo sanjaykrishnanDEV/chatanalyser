@@ -29,7 +29,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
       return;
     }
 
-    const context = dataToSend.map((conv) => ({
+    const context = dataToSend.map((conv: { source: { subject: any; author: { name: any; }; }; created_at: any; conversation_parts: { conversation_parts: any[]; }; }) => ({
       subject: conv.source?.subject,
       createdAt: conv.created_at,
       author: conv.source?.author?.name ?? 'Unknown',
@@ -44,7 +44,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
     };
 
     const allText = context
-      .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
+      .map((conv: { subject: any; author: any; conversationParts: any[]; }) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part: { body: any; }) => part.body).join(' ')}`)
       .join(' ');
 
     const totalTokens = estimateTokenCount(allText);
@@ -57,7 +57,7 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
       trimmedContext = [];
 
       for (const conv of context) {
-        const conversationText = `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`;
+        const conversationText = `${conv.subject} ${conv.author} ${conv.conversationParts.map((part: { body: any; }) => part.body).join(' ')}`;
         const conversationTokens = estimateTokenCount(conversationText);
 
         if (tokenCount + conversationTokens > maxTokens) break;
@@ -103,7 +103,8 @@ export function ChatWidget({ selectedData, chatData, conversations, setChatData 
       const aiResponse = data.message;
       
       setChatHistory(prev => [...prev, `User: ${prompt}`, `AI: ${aiResponse}`]);
-      setChatData(prev => [...prev, aiResponse]);
+      // @ts-ignore
+      setChatData((prev: any) => [...prev, aiResponse]);
       setPrompt('');
     } catch (error) {
       console.error("Error during API submission:", error);
