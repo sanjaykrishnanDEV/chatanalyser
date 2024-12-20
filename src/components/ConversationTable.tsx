@@ -110,7 +110,7 @@ export function ConversationTable({
 
   // Token estimation function
   const estimateTokenCount = (text: string) => {
-    return Math.ceil(text.split(/\s+/).length / 0.8); // Approx. 1 token per 0.75 words
+    return Math.ceil(text.split(/\s+/).length / 0.75); // Approx. 1 token per 0.75 words
   };
 
   const handleAddToChat = async () => {
