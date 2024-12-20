@@ -301,6 +301,7 @@ const handleSubmitToOpenAI = async (requestData: any, retries: number = 3) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestData),
+      mode: 'cors'
     });
 
     if (response.status === 429 && retries > 0) {
