@@ -110,59 +110,11 @@ export function ConversationTable({
 
   // Token estimation function
   const estimateTokenCount = (text: string) => {
-    return Math.ceil(text.split(/\s+/).length / 2); // Approx. 1 token per 0.75 words
+    return Math.ceil(text.split(/\s+/).length / 0.8); // Approx. 1 token per 0.75 words
   };
 
-  // const handleAddToChat = () => {
-  //   setLoadingState(true);
-  //   setChatData([]); // Clear chat data
-  //   setChatMessages([]); // Clear chat history
-  //   setChatHistory([])
-  //   const context = []; // Initialize an empty context array
-  //   let tokenCount = 0; // Initialize token count
-
-  //   // Iterate through all conversations to build context
-  //   for (const conv of conversations) {
-  //     const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
-  //     const conversationTokens = estimateTokenCount(conversationText);
-
-  //     // Check if adding this conversation exceeds the token limit
-  //     if (tokenCount + conversationTokens > 6000 * 0.8) break; // 80% of token limit
-  //     context.push({
-  //       subject: conv.source?.subject,
-  //       createdAt: conv.created_at,
-  //       author: conv.source?.author?.name ?? 'Unknown',
-  //       conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
-  //         body: part.body,
-  //         authorName: part.author?.name ?? 'Unknown',
-  //       })),
-  //     });
-  //     tokenCount += conversationTokens; // Update token count
-  //   }
-
-  //   // Combine all text for token estimation
-  //   const allText = context
-  //     .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
-  //     .join(' ');
-
-  //   const totalTokens = estimateTokenCount(allText);
-  //   console.log("token", totalTokens);
-  //   // console.log("totalchats",context)
-  //   setContext(context);
-  //   const requestData = {
-  //     data: context,
-  //     headers: ['subject', 'createdAt', 'author', 'conversationParts'],
-  //     question: question || defaultQuestion,
-  //     promptType: "extractInfo",
-  //   };
-
-  //   setChatMessages((prev) => [...prev, { author: 'User', message: 'Adding to chat...' }]);
-  //   handleSubmitToOpenAI(requestData);
-  //   setIsChatOpen(true);
-  //   setLoadingState(false);
-  // };
   const handleAddToChat = async () => {
-    setLoadingState(true); // Set loading state
+    setLoadingState(true); // Set loading state to true
     setChatData([]); // Clear chat data
     setChatMessages([]); // Clear chat history
     setChatHistory([]); // Clear previous chat history
@@ -170,13 +122,11 @@ export function ConversationTable({
     let tokenCount = 0; // Initialize token count
   
     try {
-      // Iterate through all conversations to build context
       for (const conv of conversations) {
         const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
         const conversationTokens = estimateTokenCount(conversationText);
   
-        // Check if adding this conversation exceeds the token limit
-        if (tokenCount + conversationTokens > 6500) break; // 80% of token limit
+        if (tokenCount + conversationTokens > 6000 * 0.8) break;
         context.push({
           subject: conv.source?.subject,
           createdAt: conv.created_at,
@@ -186,10 +136,10 @@ export function ConversationTable({
             authorName: part.author?.name ?? 'Unknown',
           })),
         });
-        tokenCount += conversationTokens; // Update token count
+        tokenCount += conversationTokens;
       }
   
-      setContext(context); // Update context state
+      setContext(context);
   
       const requestData = {
         data: context,
@@ -203,15 +153,22 @@ export function ConversationTable({
         { author: 'User', message: 'Adding to chat...' },
       ]);
   
-      await handleSubmitToOpenAI(requestData); // Async function
+      const totalTokens = estimateTokenCount(JSON.stringify(requestData));
+      if (totalTokens > 6500) {
+        toast.error("Token limit exceeded.");
+        return;
+      }
+  
+      await handleSubmitToOpenAI(requestData);
       setIsChatOpen(true);
     } catch (error) {
       console.error('Error in handleAddToChat:', error);
-      toast.error("Error ")
+      toast.error("Error while adding to chat.");
     } finally {
       setLoadingState(false); // Reset loading state
     }
   };
+
   
   const defaultQuestion = `
 You're an expert CSM analysing intercom pasts chats
