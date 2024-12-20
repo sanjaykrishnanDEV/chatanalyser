@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatSubject, formatDate } from '@/lib/utils/conversation';
 import type { Conversation } from '@/types';
+import { toast } from 'sonner';
 
 interface ConversationTableProps {
   conversations: Conversation[];
@@ -43,7 +44,7 @@ export function ConversationTable({
   const [, setChatMessages] = useState<{ author: string; message: string }[]>([]);
   const [question, ] = useState('');
   const [loadingState, setLoadingState] = useState(false);
-  const [context, setContext] = useState<any[]>([]); // Add this line
+  const [context, setContext] = useState<any[]>([]); 
 
   const debounceSearch = useCallback((value: string) => {
     const handler = setTimeout(() => {
@@ -109,58 +110,109 @@ export function ConversationTable({
 
   // Token estimation function
   const estimateTokenCount = (text: string) => {
-    return Math.ceil(text.split(/\s+/).length / 0.75); // Approx. 1 token per 0.75 words
+    return Math.ceil(text.split(/\s+/).length / 2); // Approx. 1 token per 0.75 words
   };
 
-  const handleAddToChat = () => {
-    setLoadingState(true);
+  // const handleAddToChat = () => {
+  //   setLoadingState(true);
+  //   setChatData([]); // Clear chat data
+  //   setChatMessages([]); // Clear chat history
+  //   setChatHistory([])
+  //   const context = []; // Initialize an empty context array
+  //   let tokenCount = 0; // Initialize token count
+
+  //   // Iterate through all conversations to build context
+  //   for (const conv of conversations) {
+  //     const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
+  //     const conversationTokens = estimateTokenCount(conversationText);
+
+  //     // Check if adding this conversation exceeds the token limit
+  //     if (tokenCount + conversationTokens > 6000 * 0.8) break; // 80% of token limit
+  //     context.push({
+  //       subject: conv.source?.subject,
+  //       createdAt: conv.created_at,
+  //       author: conv.source?.author?.name ?? 'Unknown',
+  //       conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
+  //         body: part.body,
+  //         authorName: part.author?.name ?? 'Unknown',
+  //       })),
+  //     });
+  //     tokenCount += conversationTokens; // Update token count
+  //   }
+
+  //   // Combine all text for token estimation
+  //   const allText = context
+  //     .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
+  //     .join(' ');
+
+  //   const totalTokens = estimateTokenCount(allText);
+  //   console.log("token", totalTokens);
+  //   // console.log("totalchats",context)
+  //   setContext(context);
+  //   const requestData = {
+  //     data: context,
+  //     headers: ['subject', 'createdAt', 'author', 'conversationParts'],
+  //     question: question || defaultQuestion,
+  //     promptType: "extractInfo",
+  //   };
+
+  //   setChatMessages((prev) => [...prev, { author: 'User', message: 'Adding to chat...' }]);
+  //   handleSubmitToOpenAI(requestData);
+  //   setIsChatOpen(true);
+  //   setLoadingState(false);
+  // };
+  const handleAddToChat = async () => {
+    setLoadingState(true); // Set loading state
     setChatData([]); // Clear chat data
     setChatMessages([]); // Clear chat history
-    setChatHistory([])
+    setChatHistory([]); // Clear previous chat history
     const context = []; // Initialize an empty context array
     let tokenCount = 0; // Initialize token count
-
-    // Iterate through all conversations to build context
-    for (const conv of conversations) {
-      const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
-      const conversationTokens = estimateTokenCount(conversationText);
-
-      // Check if adding this conversation exceeds the token limit
-      if (tokenCount + conversationTokens > 6000 * 0.8) break; // 80% of token limit
-      context.push({
-        subject: conv.source?.subject,
-        createdAt: conv.created_at,
-        author: conv.source?.author?.name ?? 'Unknown',
-        conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
-          body: part.body,
-          authorName: part.author?.name ?? 'Unknown',
-        })),
-      });
-      tokenCount += conversationTokens; // Update token count
+  
+    try {
+      // Iterate through all conversations to build context
+      for (const conv of conversations) {
+        const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
+        const conversationTokens = estimateTokenCount(conversationText);
+  
+        // Check if adding this conversation exceeds the token limit
+        if (tokenCount + conversationTokens > 6500) break; // 80% of token limit
+        context.push({
+          subject: conv.source?.subject,
+          createdAt: conv.created_at,
+          author: conv.source?.author?.name ?? 'Unknown',
+          conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
+            body: part.body,
+            authorName: part.author?.name ?? 'Unknown',
+          })),
+        });
+        tokenCount += conversationTokens; // Update token count
+      }
+  
+      setContext(context); // Update context state
+  
+      const requestData = {
+        data: context,
+        headers: ['subject', 'createdAt', 'author', 'conversationParts'],
+        question: question || defaultQuestion,
+        promptType: "extractInfo",
+      };
+  
+      setChatMessages((prev) => [
+        ...prev,
+        { author: 'User', message: 'Adding to chat...' },
+      ]);
+  
+      await handleSubmitToOpenAI(requestData); // Async function
+      setIsChatOpen(true);
+    } catch (error) {
+      console.error('Error in handleAddToChat:', error);
+      toast.error("Error ")
+    } finally {
+      setLoadingState(false); // Reset loading state
     }
-
-    // Combine all text for token estimation
-    const allText = context
-      .map((conv) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part) => part.body).join(' ')}`)
-      .join(' ');
-
-    const totalTokens = estimateTokenCount(allText);
-    console.log("token", totalTokens);
-    // console.log("totalchats",context)
-    setContext(context);
-    const requestData = {
-      data: context,
-      headers: ['subject', 'createdAt', 'author', 'conversationParts'],
-      question: question || defaultQuestion,
-      promptType: "extractInfo",
-    };
-
-    setChatMessages((prev) => [...prev, { author: 'User', message: 'Adding to chat...' }]);
-    handleSubmitToOpenAI(requestData);
-    setIsChatOpen(true);
-    setLoadingState(false);
   };
-
+  
   const defaultQuestion = `
 You're an expert CSM analysing intercom pasts chats
 
@@ -212,6 +264,7 @@ conversation data follows
       });
 
       if (response.status === 429 && retries > 0) {
+        toast.error("Too many requests. Please try again later."); // Notify user of 429 error
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
         return handleSubmitToOpenAI(requestData, retries - 1); // Retry
       }
@@ -241,7 +294,7 @@ conversation data follows
     <div className="space-y-4  overflow-hidden ">
       {/* Search and Date Range Inputs */}
       <div className="flex ">
-        <div className="flex flex-col w-1/3 pr-2 mr-5">
+        <div className="flex flex-col w-1/3 pr-2 mr-5 ml-1">
           <div className="text-lg">Search Term</div>
           <Input
             placeholder="Search conversations..."
@@ -274,12 +327,16 @@ conversation data follows
         {/* Selected {context.length} of {filteredConversations.length} chats ({conversations.length} total chats) */}
         <p>Selected top {context.length} out of total {filteredConversations.length} chats to fit context length</p>
         <div className="flex items-center ml-auto">
-          <button disabled={loadingState} onClick={handleResetFilters} className="btn bg-secondary text-black mt-4 ">
+          <button disabled={loadingState} onClick={handleResetFilters} className="btn bg-secondary text-black  mr-2">
             Reset Filters
           </button>
-          <button disabled={loadingState} onClick={handleAddToChat} className="btn bg-primary text-white mt-4 ml-4">
-            Add to Chat
-          </button>
+          <button
+  disabled={loadingState}
+  onClick={handleAddToChat}
+  className={`btn ${loadingState ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-primary text-white'}`}
+>
+  {loadingState ? 'Processing...' : 'Add to Chat'}
+</button>
         </div>
       </div>
 
@@ -315,15 +372,15 @@ conversation data follows
 
       {/* Pagination */}
       <div className="flex justify-between mt-4">
-        <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} className="btn bg-primary text-white">
+        <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} className="btn bg-secondary text-black">
           Previous
         </button>
+          {/* <span>Page {currentPage} of {totalPages}</span> */}
         <div className="flex items-center space-x-4">
-          <span>Page {currentPage} of {totalPages}</span>
           <button
             disabled={currentPage === totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
-            className="btn bg-primary text-white"
+            className="btn bg-secondary text-black"
           >
             Next
           </button>
