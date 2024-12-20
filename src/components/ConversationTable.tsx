@@ -110,7 +110,7 @@ export function ConversationTable({
 
   // Token estimation function
   const estimateTokenCount = (text: string) => {
-    return Math.ceil(text.split(/\s+/).length / 2); // Approx. 1 token per 0.75 words
+    return Math.ceil(text.split(/\s+/).length / 0.8); // Approx. 1 token per 0.75 words
   };
 
   // const handleAddToChat = () => {
@@ -176,7 +176,7 @@ export function ConversationTable({
         const conversationTokens = estimateTokenCount(conversationText);
   
         // Check if adding this conversation exceeds the token limit
-        if (tokenCount + conversationTokens > 6500) break; // 80% of token limit
+        if (tokenCount + conversationTokens > 6000) break; // 80% of token limit
         context.push({
           subject: conv.source?.subject,
           createdAt: conv.created_at,
