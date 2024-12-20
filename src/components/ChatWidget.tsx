@@ -1,4 +1,4 @@
-import {  useState } from 'react';
+import { useState } from 'react';
 import { SendHorizontal, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import type { Conversation } from '@/types';
 import { toast } from 'sonner';
+
 interface ChatWidgetProps {
   selectedData: Conversation | null;
   chatData: string[];
@@ -15,7 +16,14 @@ interface ChatWidgetProps {
   setChatHistory: (history: string[]) => void;
 }
 
-export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, conversations, setChatData }: ChatWidgetProps) {
+export function ChatWidget({
+  selectedData,
+  chatHistory,
+  setChatHistory,
+  chatData,
+  conversations,
+  setChatData,
+}: ChatWidgetProps) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,12 +33,12 @@ export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, 
 
     const dataToSend = selectedData || conversations;
     if (!dataToSend) {
-      console.error("No data to send to the server.");
+      console.error('No data to send to the server.');
       setLoading(false);
       return;
     }
 
-    const context = dataToSend.map((conv: { source: { subject: any; author: { name: any; }; }; created_at: any; conversation_parts: { conversation_parts: any[]; }; }) => ({
+    const context = dataToSend.map((conv: { source: { subject: any; author: { name: any }; }; created_at: any; conversation_parts: { conversation_parts: any[] }; }) => ({
       subject: conv.source?.subject,
       createdAt: conv.created_at,
       author: conv.source?.author?.name ?? 'Unknown',
@@ -82,13 +90,13 @@ export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, 
       data: [chatData],
       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
       question: prompt || defaultQuestion,
-      promptType: "extractInfo",
+      promptType: 'extractInfo',
     };
 
     try {
-      console.log("Sending to OpenAI backend:", requestData);
+      console.log('Sending to OpenAI backend:', requestData);
 
-      const response = await fetch('https://gpt-be.onrender.com/api/process', {
+      const response = await fetch('http://localhost:5000/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,16 +110,13 @@ export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, 
 
       const data = await response.json();
       const aiResponse = data.message;
-      
-      // @ts-ignore
+
       setChatHistory((prev: any) => [...prev, `User: ${prompt}`, `AI: ${aiResponse}`]);
-      // @ts-ignore
-      // setChatData((prev: any) => [...prev, aiResponse]);
+      setChatData((prev: any) => [...prev, aiResponse]); // Add AI response to chatData
       setPrompt('');
     } catch (error) {
-      console.error("Error during API submission:", error);
-     
-      toast.error("Error during API submission");
+      console.error('Error during API submission:', error);
+      toast.error('Error during API submission');
     } finally {
       setLoading(false);
     }
@@ -125,16 +130,11 @@ export function ChatWidget({ selectedData,chatHistory,setChatHistory, chatData, 
       <CardContent className="flex-1 flex flex-col">
         <ScrollArea className="flex-1 mb-4">
           <div className="space-y-4">
-          {/* {chatData.map((message, index) => (
-  <div key={index} className="p-3 rounded-lg bg-muted mr-4 ml-auto text-right">
-    <p className="text-md">User: {message}</p>
-  </div>
-))} */}
-<div className="p-3 rounded-lg text-lg text-black mr-4 text-left">
-<pre className='text-lg'>Initial prompt</pre>
-------------------------------------
-<pre className='text-sm p-6'>
-  {`You're an expert CSM analysing intercom pasts chats
+            <div className="p-3 rounded-lg text-lg text-black mr-4 text-left">
+              <pre className="text-lg">Initial prompt</pre>
+              ------------------------------------
+              <pre className="text-sm p-6">
+                {`You're an expert CSM analysing intercom past chats
 
 Conversation data is provided in the following format:
 - Each entry in the data array includes:
@@ -170,34 +170,34 @@ Please analyze this data and provide the following:
 - Include bullet points or concise explanations for ease of understanding.
 
 conversation data follows
----
-`}
-</pre>
-</div>
-{chatData.length > 0 && (
-      <div className="p-3 rounded-lg bg-muted text-left">
-        <h2 className="font-semibold text-xl mb-2">AI Response</h2>
-        {chatData.map((message, index) => (
-          <div key={index}>
-            {/* Parse sections like '1. Key Point Summary' dynamically */}
-            {message.split('\n').map((line, i) => (
-              <p key={i} className="mb-2">
-                {line.startsWith('**') ? (
-                  <span className="font-bold">{line.replace(/\*\*/g, '')}</span>
-                ) : (
-                  line
-                )}
-              </p>
+---`}
+              </pre>
+            </div>
+
+            {chatData.length > 0 && (
+              <div className="p-3 rounded-lg bg-muted text-left">
+                <h2 className="font-semibold text-xl mb-2">AI Response</h2>
+                {chatData.map((message, index) => (
+                  <div key={index}>
+                    {message.split('\n').map((line, i) => (
+                      <p key={i} className="mb-2">
+                        {line.startsWith('**') ? (
+                          <span className="font-bold">{line.replace(/\*\*/g, '')}</span>
+                        ) : (
+                          line
+                        )}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {chatHistory.map((message, index) => (
+              <div key={index} className="p-3 rounded-lg text-lg bg-black text-white mr-4 text-left">
+                <p className="text-md">{message}</p>
+              </div>
             ))}
-          </div>
-        ))}
-      </div>
-    )}
-{chatHistory.map((message, index) => (
-  <div key={index} className="p-3 rounded-lg text-lg bg-black text-white mr-4 text-left">
-    <p className="text-md">{message}</p>
-  </div>
-))}
             {loading && <p>Loading...</p>}
           </div>
         </ScrollArea>
@@ -210,16 +210,23 @@ conversation data follows
               placeholder="Ask AI about this conversation..."
               className="min-h-[80px]"
             />
-            <div className=' flex flex-col gap-1 justify-between'>
-            <Button type="submit" size="sm" disabled={loading} title="Send chat">
-              {loading ? <span>Loading...</span> : <SendHorizontal className="h-4 w-4" />}
-            </Button>
-            <Button  title="Clear chat" className='bg-red-800' type="button" size="sm" disabled={loading} onClick={() => {
-              setChatData([]);
-              setChatHistory([]);
-            }}>
-              {loading ? <span>Loading...</span> : <StopCircle className="h-4 w-4" />}
-            </Button>
+            <div className="flex flex-col gap-1 justify-between">
+              <Button type="submit" size="sm" disabled={loading} title="Send chat">
+                {loading ? <span>Loading...</span> : <SendHorizontal className="h-4 w-4" />}
+              </Button>
+              <Button
+                title="Clear chat"
+                className="bg-red-800"
+                type="button"
+                size="sm"
+                disabled={loading}
+                onClick={() => {
+                  setChatData([]);
+                  setChatHistory([]);
+                }}
+              >
+                {loading ? <span>Loading...</span> : <StopCircle className="h-4 w-4" />}
+              </Button>
             </div>
           </form>
         )}
