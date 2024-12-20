@@ -122,7 +122,7 @@ export function ConversationTable({
     let tokenCount = 0; // Initialize token count
   
     try {
-      for (const conv of conversations) {
+      for (const conv of filteredConversations) {
         const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
         const conversationTokens = estimateTokenCount(conversationText);
   
