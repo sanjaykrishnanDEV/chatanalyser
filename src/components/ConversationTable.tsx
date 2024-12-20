@@ -35,7 +35,6 @@ export function ConversationTable({
   setSearch,
   dateRange,
   setDateRange,
-  setChatHistory,
 }: ConversationTableProps) {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [displayCount] = useState(10);

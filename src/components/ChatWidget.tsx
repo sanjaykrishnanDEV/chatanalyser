@@ -110,8 +110,9 @@ export function ChatWidget({
 
       const data = await response.json();
       const aiResponse = data.message;
-
+      //@ts-ignore
       setChatHistory((prev: any) => [...prev, `User: ${prompt}`, `AI: ${aiResponse}`]);
+      //@ts-ignore
       setChatData((prev: any) => [...prev, aiResponse]); // Add AI response to chatData
       setPrompt('');
     } catch (error) {
