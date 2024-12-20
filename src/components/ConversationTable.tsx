@@ -181,11 +181,7 @@ const handleAddToChat = async () => {
       { author: 'User', message: 'Adding to chat...' },
     ]);
 
-    const totalTokens = estimateTokenCount(JSON.stringify(requestData));
-    // if (totalTokens > 6500) {
-    //   toast.error("Token limit exceeded. Please refine your data.");
-    //   return;
-    // }
+    
 
     await handleSubmitToOpenAI(requestData); // Send the data to OpenAI API
     setIsChatOpen(true); // Set the chat to open
