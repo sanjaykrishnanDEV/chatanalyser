@@ -184,6 +184,7 @@ const filterUnwantedContent = (text: string) => {
 const handleAddToChat = async () => {
   setLoadingState(true);
   setChatData([]);
+  setChatHistory([]);
   setChatMessages([]);
 
   try {
