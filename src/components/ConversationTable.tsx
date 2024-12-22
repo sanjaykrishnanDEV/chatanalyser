@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -44,7 +44,10 @@ export function ConversationTable({
   const [question, ] = useState('');
   const [loadingState, setLoadingState] = useState(false);
   const [context, setContext] = useState<any[]>([]); 
-
+  useEffect(() => {
+    setDebouncedSearch(search);
+  }, [search]);
+  
   const debounceSearch = useCallback((value: string) => {
     const handler = setTimeout(() => {
       setDebouncedSearch(value);
@@ -75,70 +78,47 @@ export function ConversationTable({
 
   const filteredConversations = useMemo(() => {
     return conversations.filter((conv) => {
-      const subject = conv.source?.subject?.toLowerCase() || '';
-      const body = conv.source?.body?.toLowerCase() || '';
-      const createdAt = new Date(conv.created_at * 1000); // Convert Unix timestamp to Date
-
+      // Convert all searchable content to lowercase for case-insensitive search
+      const searchableContent = [
+        // Main conversation data
+        conv.source?.subject?.toLowerCase() || '',
+        conv.source?.body?.toLowerCase() || '',
+        conv.source?.author?.name?.toLowerCase() || '',
+        conv.source?.author?.email?.toLowerCase() || '',
+        
+        // Conversation parts
+        ...(conv.conversation_parts?.conversation_parts?.flatMap(part => [
+          part.body?.toLowerCase() || '',
+          part.author?.name?.toLowerCase() || '',
+          part.author?.email?.toLowerCase() || '',
+          // Add any other part fields you want to search
+        ]) || []),
+        // Add any other fields you want to search
+      ].filter(Boolean); // Remove empty strings
+  
+      const createdAt = new Date(conv.created_at * 1000);
+  
       // Filter by search
       const searchTerms = debouncedSearch.toLowerCase().split(',').map(term => term.trim());
-      const matchesSearch = searchTerms.every(
-        (term) => subject.includes(term) || body.includes(term)
+      const matchesSearch = searchTerms.every(term =>
+        searchableContent.some(content => content.includes(term))
       );
-
+  
       // Filter by date range
       const fromDate = dateRange.from ? new Date(dateRange.from) : undefined;
       const toDate = dateRange.to ? new Date(dateRange.to) : undefined;
       const matchesDateRange =
         (!fromDate || createdAt >= fromDate) &&
         (!toDate || createdAt <= toDate);
-
+  
       return matchesSearch && matchesDateRange;
     });
   }, [conversations, debouncedSearch, dateRange]);
 
-  const totalPages = Math.ceil(filteredConversations.length / displayCount);
+  useEffect(() => {
+    const newContext = [];
+    let tokenCount = 0;
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const paginatedConversations = filteredConversations.slice(
-    (currentPage - 1) * displayCount,
-    currentPage * displayCount
-  );
-
-  // Token estimation function
-const estimateTokenCount = (text: string) => {
-  return Math.ceil(text.split(/\s+/).length / 4); // Approx. 1 token per 0.75 words
-};
-
-// Cleaning function to filter unwanted content
-const filterUnwantedContent = (text: string) => {
-  if (!text) return '';
-  // Remove URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  // Remove image references
-  const imageRegex = /\[Image\s".*?"\]/g;
-  // Remove special characters (like &amp;)
-  const specialCharRegex = /&\w+;/g;
-  // Remove extra spaces
-  const extraSpaceRegex = /\s+/g;
-
-  return text
-    .replace(urlRegex, '')
-    .replace(imageRegex, '')
-    .replace(specialCharRegex, '')
-    .replace(extraSpaceRegex, ' ')
-    .trim();
-};
-const handleAddToChat = async () => {
-  setLoadingState(true);
-  setChatData([]); // Clear chat data (if needed)
-  setChatMessages([]); // Clear chat messages (if needed)
-  const newContext = []; // Start with an empty context
-  let tokenCount = 0; // Initialize token count
-
-  try {
     for (const conv of filteredConversations) {
       // Clean the conversation body by removing unwanted content
       const cleanSubject = filterUnwantedContent(conv.source?.subject || '');
@@ -163,14 +143,52 @@ const handleAddToChat = async () => {
       tokenCount += conversationTokens;
     }
 
-    // Log the number of conversations that can be sent
-    console.log("Number of conversations sent:", newContext.length);
-
-    // Update the context with the new conversations
     setContext(newContext);
+  }, [filteredConversations])
+  
+  const totalPages = Math.ceil(filteredConversations.length / displayCount);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const paginatedConversations = filteredConversations.slice(
+    (currentPage - 1) * displayCount,
+    currentPage * displayCount
+  );
+
+  // Token estimation function
+const estimateTokenCount = (text: string) => {
+  return Math.ceil(text.split(/\s+/).length / 3); // Approx. 1 token per 0.75 words
+};
+
+// Cleaning function to filter unwanted content
+const filterUnwantedContent = (text: string) => {
+  if (!text) return '';
+  // Remove URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Remove image references
+  const imageRegex = /\[Image\s".*?"\]/g;
+  // Remove special characters (like &amp;)
+  const specialCharRegex = /&\w+;/g;
+  // Remove extra spaces
+  const extraSpaceRegex = /\s+/g;
+
+  return text
+    .replace(urlRegex, '')
+    .replace(imageRegex, '')
+    .replace(specialCharRegex, '')
+    .replace(extraSpaceRegex, ' ')
+    .trim();
+};
+const handleAddToChat = async () => {
+  setLoadingState(true);
+  setChatData([]);
+  setChatMessages([]);
+
+  try {
     const requestData = {
-      data: newContext,
+      data: context, // Use existing context instead of creating new one
       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
       question: question || defaultQuestion,
       promptType: "extractInfo",
@@ -181,81 +199,16 @@ const handleAddToChat = async () => {
       { author: 'User', message: 'Adding to chat...' },
     ]);
 
-    const totalTokens = estimateTokenCount(JSON.stringify(requestData));
-    if (totalTokens > 6500) {
-      toast.error("Token limit exceeded. Please refine your data.");
-      return;
-    }
-
-    await handleSubmitToOpenAI(requestData); // Send the data to OpenAI API
-    setIsChatOpen(true); // Set the chat to open
+    await handleSubmitToOpenAI(requestData);
+    setIsChatOpen(true);
     console.log("data", JSON.stringify(requestData));
   } catch (error) {
     console.error('Error in handleAddToChat:', error);
     toast.error("Error while adding to chat.");
   } finally {
-    setLoadingState(false); // Reset loading state
+    setLoadingState(false);
   }
 };
-
-  
-  // const handleAddToChat = async () => {
-  //   setLoadingState(true);
-  //   setChatData([]); // Clear chat data (if needed)
-  //   setChatMessages([]); // Clear chat messages (if needed)
-  //   const newContext = [...context]; // Preserve previous context
-  //   let tokenCount = 0; // Initialize token count
-    
-  //   try {
-  //     for (const conv of conversations) {
-  //       const conversationText = `${conv.source?.subject} ${conv.source?.author?.name ?? 'Unknown'} ${conv.conversation_parts.conversation_parts.map((part) => part.body).join(' ')}`;
-  //       const conversationTokens = estimateTokenCount(conversationText);
-    
-  //       if (tokenCount + conversationTokens > 4000 * 0.8) break;
-  //       newContext.push({
-  //         subject: conv.source?.subject,
-  //         createdAt: conv.created_at,
-  //         author: conv.source?.author?.name ?? 'Unknown',
-  //         conversationParts: conv.conversation_parts.conversation_parts.map((part) => ({
-  //           body: part.body,
-  //           authorName: part.author?.name ?? 'Unknown',
-  //         })),
-  //       });
-  //       tokenCount += conversationTokens;
-  //     }
-  
-  //     // After adding the conversation data, set the updated context
-  //     setContext(newContext); // Set the full context
-  
-  //     const requestData = {
-  //       data: newContext, // Send the updated context
-  //       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
-  //       question: question || defaultQuestion,  // Send the initial question
-  //       promptType: "extractInfo",
-  //     };
-  
-  //     setChatMessages((prev) => [
-  //       ...prev,
-  //       { author: 'User', message: 'Adding to chat...' },
-  //     ]);
-  
-  //     const totalTokens = estimateTokenCount(JSON.stringify(requestData));
-  //     // if (totalTokens > 6500) {
-  //     //   toast.error("Token limit exceeded.");
-  //     //   return;
-  //     // }
-  
-  //     await handleSubmitToOpenAI(requestData); // Send the data to OpenAI API
-  //     setIsChatOpen(true); // Set the chat to open
-  //     console.log("data",JSON.stringify(requestData))
-  //   } catch (error) {
-  //     console.error('Error in handleAddToChat:', error);
-  //     toast.error("Error while adding to chat.");
-  //   } finally {
-  //     setLoadingState(false); // Reset loading state
-  //   }
-  // };
-  
   
   const defaultQuestion = `
 You're an expert CSM analysing intercom pasts chats
@@ -270,8 +223,8 @@ Conversation data is provided in the following format:
 Please analyze this data and provide the following:
 
 1. **Key Point Summary**:
-   - Summarize the main ideas and conclusions discussed in each subject.
-   - Note any unresolved issues or next steps.
+   - What are the 3-5 most common topics/issues across all conversations?
+   - Identify any notable patterns in customer inquiries or concerns
 
 2. **Theme Analysis**:
    - Identify recurring topics or themes across all conversations.
@@ -292,14 +245,14 @@ Please analyze this data and provide the following:
 **Output Format**:
 - Use structured sections with clear headings for each analysis point.
 - Include bullet points or concise explanations for ease of understanding.
-
+- make sure to fit the response to a maximum of 500 tokens limit
 conversation data follows
 ---
 `;
 
 const handleSubmitToOpenAI = async (requestData: any, retries: number = 3) => {
   try {
-      const response = await fetch('https://gpt-be.onrender.com/api/process', {
+      const response = await fetch('http://localhost:5000/api/process', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

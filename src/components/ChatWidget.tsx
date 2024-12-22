@@ -26,7 +26,7 @@ export function ChatWidget({
 }: ChatWidgetProps) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -34,6 +34,7 @@ export function ChatWidget({
     const dataToSend = selectedData || conversations;
     if (!dataToSend) {
       console.error('No data to send to the server.');
+      toast.error("No data sent to server")
       setLoading(false);
       return;
     }
@@ -75,26 +76,16 @@ export function ChatWidget({
       }
     }
 
-    const defaultQuestion = `
-    Given the following conversation data:
-    - Subjects, authors, and creation dates are provided for each context.
-    - Each context includes detailed conversation parts with their respective authors.
-    
-    Please provide:
-    1. A summary of key points discussed across all subjects.
-    2. An analysis of the most frequent themes or topics covered.
-    3. Suggestions for improving the communication based on the conversation details.
-    `;
-    
+  
     const requestData = {
-      data: [chatData],
+      data: trimmedContext,
       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
-      question: prompt || defaultQuestion,
+      question: prompt ,
       promptType: 'extractInfo',
     };
 
     try {
-      console.log('Sending to OpenAI backend:', requestData);
+      // console.log('Sending to OpenAI backend:', requestData);
 
       const response = await fetch('http://localhost:5000/api/process', {
         method: 'POST',
