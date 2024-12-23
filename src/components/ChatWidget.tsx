@@ -183,11 +183,45 @@ conversation data follows
               </div>
             )}
 
-            {chatHistory.map((message, index) => (
-              <div key={index} className="p-3 rounded-lg text-lg bg-black text-white mr-4 text-left">
-                <p className="text-md">{message}</p>
+            {chatHistory.map((message, index) => {
+  const [prefix, ...contentParts] = message.split(': ');
+  const content = contentParts.join(': ');
+
+  return (
+    <div key={index} className="p-3 rounded-lg bg-black text-white mr-4 text-left">
+      <div className="font-bold mb-2">{prefix}:</div>
+      {prefix.includes('AI') ? (
+        <div className="space-y-4">
+          {content.split(/\d+\.\s+/).filter(Boolean).map((section, idx) => {
+            const [title, ...details] = section.split(':');
+            // Remove asterisks from the title
+            const cleanTitle = title.replace(/\*\*/g, '');
+            return (
+              <div key={idx} className="ml-2">
+                <div className="font-semibold">{cleanTitle.trim()}:</div>
+                {details.length > 0 && (
+                  <div className="ml-4">
+                    {details.join(':').split('-').map((detail, detailIdx) => {
+                      // Remove asterisks from the details
+                      const cleanDetail = detail.replace(/\*\*/g, '');
+                      return cleanDetail.trim() && (
+                        <div key={detailIdx} className="text-sm">
+                          • {cleanDetail.trim()}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-md">{content}</p>
+      )}
+    </div>
+  );
+})}
             {loading && <p>Loading...</p>}
           </div>
         </ScrollArea>
