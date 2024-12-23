@@ -168,20 +168,18 @@ conversation data follows
 
             {chatData.length > 0 && (
               <div className="p-3 rounded-lg bg-muted text-left">
-                <h2 className="font-semibold text-xl mb-2">AI Response</h2>
-                {chatData.map((message, index) => (
-                  <div key={index}>
-                    {message.split('\n').map((line, i) => (
-                      <p key={i} className="mb-2">
-                        {line.startsWith('**') ? (
-                          <span className="font-bold">{line.replace(/\*\*/g, '')}</span>
-                        ) : (
-                          line
-                        )}
-                      </p>
-                    ))}
-                  </div>
-                ))}
+                <h2 className="font-semibold text-xl mb-2">Initial Analysis</h2>
+                <div>
+                  {chatData[0].split('\n').map((line, i) => (
+                    <p key={i} className="mb-2">
+                      {line.startsWith('**') ? (
+                        <span className="font-bold">{line.replace(/\*\*/g, '')}</span>
+                      ) : (
+                        line
+                      )}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
 
