@@ -15,7 +15,7 @@ function App() {
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [chatHistory, setChatHistory] = useState<string[]>([]);
-
+  const [context, setContext] = useState<any[]>([]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const searchParam = params.get('search');
@@ -34,7 +34,9 @@ function App() {
     if (dateRange.to) params.set('to', dateRange.to);
     window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
   }, [search, dateRange]);
-
+    useEffect(() => {
+    console.log('App: Context updated:', context);
+  }, [context]);
   return (
     <div className="max-h-screen bg-background p-8 w-screen overflow-hidden">
       <div className="mx-auto max-w-10xl space-y-8">
@@ -75,6 +77,8 @@ function App() {
               setDateRange={setDateRange}
               chatHistory={chatHistory}
               setChatHistory={setChatHistory}
+              context = {context}
+              setContext = {setContext}
             />
           </div>
           <div className="lg:col-span-2">
@@ -85,6 +89,7 @@ function App() {
               setChatData={setChatData}
               chatHistory={chatHistory}
               setChatHistory={setChatHistory}
+              context = {context}
               />
           </div>
         </div>
