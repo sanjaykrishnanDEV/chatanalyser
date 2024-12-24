@@ -14,6 +14,7 @@ interface ChatWidgetProps {
   setChatData: (data: string[]) => void;
   chatHistory: string[];
   setChatHistory: (history: string[]) => void;
+  context: string[];
 }
 
 export function ChatWidget({
@@ -23,14 +24,21 @@ export function ChatWidget({
   chatData,
   conversations,
   setChatData,
+  context
 }: ChatWidgetProps) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
+
+   useEffect(() => {
+    if (context) {
+      console.log("context from widget:", context);
+    }
+  }, [context]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+  
     const dataToSend = selectedData || conversations;
     if (!dataToSend) {
       console.error('No data to send to the server.');
@@ -39,46 +47,10 @@ export function ChatWidget({
       return;
     }
 
-    const context = dataToSend.map((conv: { source: { subject: any; author: { name: any }; }; created_at: any; conversation_parts: { conversation_parts: any[] }; }) => ({
-      subject: conv.source?.subject,
-      createdAt: conv.created_at,
-      author: conv.source?.author?.name ?? 'Unknown',
-      conversationParts: conv.conversation_parts.conversation_parts.map(part => ({
-        body: part.body,
-        authorName: part.author?.name ?? 'Unknown',
-      })),
-    }));
-
-    const estimateTokenCount = (text: string) => {
-      return Math.ceil(text.split(/\s+/).length / 4);
-    };
-
-    const allText = context
-      .map((conv: { subject: any; author: any; conversationParts: any[]; }) => `${conv.subject} ${conv.author} ${conv.conversationParts.map((part: { body: any; }) => part.body).join(' ')}`)
-      .join(' ');
-
-    const totalTokens = estimateTokenCount(allText);
-    const maxTokens = 12000;
-
-    let trimmedContext = context;
-
-    if (totalTokens > maxTokens) {
-      let tokenCount = 0;
-      trimmedContext = [];
-
-      for (const conv of context) {
-        const conversationText = `${conv.subject} ${conv.author} ${conv.conversationParts.map((part: { body: any; }) => part.body).join(' ')}`;
-        const conversationTokens = estimateTokenCount(conversationText);
-
-        if (tokenCount + conversationTokens > maxTokens) break;
-        trimmedContext.push(conv);
-        tokenCount += conversationTokens;
-      }
-    }
-
+    
   
     const requestData = {
-      data: trimmedContext,
+      data: context,
       headers: ['subject', 'createdAt', 'author', 'conversationParts'],
       question: prompt ,
       promptType: 'extractInfo',
