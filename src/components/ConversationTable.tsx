@@ -25,6 +25,8 @@ interface ConversationTableProps {
   setDateRange: (value: { from: string; to: string }) => void;
   chatHistory: string[]; 
   setChatHistory: (history: string[]) => void;
+  context: any[]; 
+  setContext: (context: any[]) => void;
 }
 
 export function ConversationTable({
@@ -35,7 +37,9 @@ export function ConversationTable({
   setSearch,
   dateRange,
   setDateRange,
-  setChatHistory
+  setChatHistory,
+  context,
+  setContext
 }: ConversationTableProps) {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [displayCount] = useState(10);
@@ -44,7 +48,6 @@ export function ConversationTable({
   const [, setChatMessages] = useState<{ author: string; message: string }[]>([]);
   const [question, ] = useState('');
   const [loadingState, setLoadingState] = useState(false);
-  const [context, setContext] = useState<any[]>([]); 
   useEffect(() => {
     setDebouncedSearch(search);
   }, [search]);
